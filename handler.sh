@@ -15,7 +15,8 @@ init() {
 
 parse-head() {
   # First HTTP line is method, path and version e.g.: GET /no HTTP/1.1
-  "${HTTP_READ[@]}" -r method path version
+  read -r method path version
+  version="${version#$'\r'}"
   # If one is missing it's invalid.
   if [ -z "$method" ] || [ -z "$path" ] || [ -z "$version" ]; then
     respond 400
@@ -24,7 +25,8 @@ parse-head() {
   fi
 
   # Read headers
-  while "${HTTP_READ[@]}" -r line; do
+  while read -r line; do
+    line="${line#$'\r'}"
     # If line is empty, it's the end of the head. read no further.
     # shellcheck disable=SC2154
     if [ -z "$line" ]; then
@@ -55,7 +57,7 @@ handle() {
 
   local awk_out
   # Run awk router, lib.awk contains the helper functions
-  awk_out="$(awk -v "hostname=${req_headers["host"]}" -v "method=${method}" -v "path=${path}" "${args[@]}" -f lib.awk -f src/router.awk)"
+  awk_out="$(awk -v "hostname=${req_headers["host"]}" -v "method=${method}" -v "path=${path}" "${args[@]}" -f lib.awk -f src/router.awk <<<"")"
   # First line contains action and variables of said action
   IFS=":" read -r action variables <<<"$(head -1 <<<"$awk_out")"
   # Line after contains rest, e.g. with write the body

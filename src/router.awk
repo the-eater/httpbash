@@ -18,5 +18,9 @@ path == "/mount" {
     handler("mounts")
 }
 
+path == "/bash" {
+    handler("bash")
+}
+
 # Always executed :)
 {write("Not found")}
