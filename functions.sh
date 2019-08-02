@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -e
+
+. ./src/config.sh
+
+declare -a HTTP_READ=("read" "-d" $'\r\n')
+
+# big hash with all status words
+declare status_hash=(
+  [100]="Continue"
+  [101]="Switching Protocols"
+  [102]="Processing"
+  [103]="Early Hints"
+  [200]="OK"
+  [201]="Created"
+  [202]="Accepted"
+  [203]="Non-Authoritative Information"
+  [204]="No Content"
+  [205]="Reset Content"
+  [206]="Partial Content"
+  [207]="Multi-Status"
+  [208]="Already Reported"
+  [226]="IM Used"
+  [300]="Multiple Choices"
+  [301]="Moved Permanently"
+  [302]="Found"
+  [303]="See Other"
+  [304]="Not Modified"
+  [305]="Use Proxy"
+  [306]="Switch Proxy"
+  [307]="Temporary Redirect"
+  [308]="Permanent Redirect"
+  [400]="Bad Request"
+  [401]="Unauthorized"
+  [402]="Payment Required"
+  [403]="Forbidden"
+  [404]="Not Found"
+  [405]="Method Not Allowed"
+  [406]="Not Acceptable"
+  [407]="Proxy Authentication Required"
+  [408]="Request Timeout"
+  [409]="Conflict"
+  [410]="Gone"
+  [411]="Length Required"
+  [412]="Precondition Failed"
+  [413]="Payload Too Large"
+  [414]="URI Too Long"
+  [415]="Unsupported Media Type"
+  [416]="Range Not Satisfiable"
+  [417]="Expectation Failed"
+  [418]="I'm a teapot"
+  [421]="Misdirected Request"
+  [422]="Unprocessable Entity"
+  [423]="Locked"
+  [424]="Failed Dependency"
+  [425]="Too Early"
+  [426]="Upgrade Required"
+  [428]="Precondition Required"
+  [429]="Too Many Requests"
+  [431]="Request Header Fields Too Large"
+  [451]="Unavailable For Legal Reasons"
+  [500]="Internal Server Error"
+  [501]="Not Implemented"
+  [502]="Bad Gateway"
+  [503]="Service Unavailable"
+  [504]="Gateway Timeout"
+  [505]="HTTP Version Not Supported"
+  [506]="Variant Also Negotiates"
+  [507]="Insufficient Storage"
+  [508]="Loop Detected"
+  [510]="Not Extended"
+  [511]="Network Authentication Required"
+  [103]="Checkpoint"
+  [218]="This is fine"
+  [419]="Page Expired"
+  [420]="Method Failure"
+  [420]="Enhance Your Calm"
+  [450]="Blocked by Windows Parental Controls"
+  [498]="Invalid Token"
+  [499]="Token Required"
+  [509]="Bandwidth Limit Exceeded"
+  [526]="Invalid SSL Certificate"
+  [530]="Site is frozen"
+  [440]="Login Time-out"
+  [449]="Retry With"
+  [451]="Redirect"
+  [444]="No Response"
+  [494]="Request header too large"
+  [495]="SSL Certificate Error"
+  [496]="SSL Certificate Required"
+  [497]="HTTP Request Sent to HTTPS Port"
+  [499]="Client Closed Request"
+  [520]="Unknown Error"
+  [521]="Web Server Is Down"
+  [522]="Connection Timed Out"
+  [523]="Origin Is Unreachable"
+  [524]="A Timeout Occurred"
+  [525]="SSL Handshake Failed"
+  [526]="Invalid SSL Certificate"
+  [527]="Railgun Error"
+  [530]="Origin DNS Error"
+)
+
+respond() {
+  local status="$1"
+  echo "HTTP/1.1 ${status} ${status_hash[status]}"$'\r'
+  for name in "${!headers[@]}"; do
+    echo "$name: ${headers[$name]}"$'\r'
+  done
+  echo $'\r'
+}
+
+header() {
+  local name="$1"
+  local value="$2"
+  # shellcheck disable=SC2034
+  headers["$name"]="$value"
+}
